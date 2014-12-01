@@ -34,10 +34,10 @@
 					let enter = this._wrapWhen(options.enter);
 					let leave = this._wrapWhen(options.leave);
 
-					this.visit = (node, key, parentNode) => (
-						enter(node, key, parentNode)
-						.then(node => this.into(node))
-						.then(node => isSkipped(node) ? node : leave(node, key, parentNode))
+					this.visit = (node, key, parentNode, path) => (
+						enter(node, key, parentNode, path)
+						.then(node => this.into(node, null, null, path))
+						.then(node => isSkipped(node) ? node : leave(node, key, parentNode, path))
 					);
 
 					break;
@@ -54,17 +54,18 @@
 					throw new TypeError('Unsupported visitor config.');
 			}
 
-			return this.visit(node);
+			return this.visit(node, null, null, []);
 		}
 
 		_wrapWhen(func) {
-			return func ? ((node, key, parentNode) =>
-				asPromise(func.call(this, node, key, parentNode))
+			return func ? ((node, key, parentNode, path) =>
+				asPromise(func.call(this, node, key, parentNode, path))
 				.then(newValue => newValue === undefined ? node : newValue)
 			) : resolve;
 		}
 
-		into(node) {
+		into(node, key, parent, path) {
+
 			if (!isObject(node) || isSkipped(node)) {
 				return Promise.resolve(node);
 			}
@@ -73,7 +74,7 @@
 				let subNode = node[key];
 
 				return asPromise(subNode)
-					.then(subNode => this.visit(subNode, key, node))
+					.then(subNode => this.visit(subNode, key, node, path.concat(key)))
 					.then(newSubNode => {
 						if (!isSkipped(newSubNode)) {
 							if (newSubNode !== subNode) {
