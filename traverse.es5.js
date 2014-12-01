@@ -66,8 +66,6 @@ var this$0 = this;(function(factory ) {
 
 		proto$0.into = function(node, key, parent, path) {var this$0 = this;
 
-			console.log("Node is", node, "path is", path);
-
 			if (!isObject(node) || isSkipped(node)) {
 				return Promise.resolve(node);
 			}
